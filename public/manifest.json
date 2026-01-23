@@ -1,0 +1,16 @@
+{
+  "appid": "vip.laituba.apps",
+  "name": "AppStore",
+  "short_name": "AppStore",
+  "description": "一个免费的应用商店，提供海量应用免费下载。",
+  "theme_color": "#ffffff",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

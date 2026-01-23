@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  pansou-site:
+    image: pansou-site:latest # 使用本地的 pansou-site 镜像
+    ports:
+      - "3000:3000"  # 映射容器端口 3000 到主机端口 3000
+    env_file:
+      - .env # 引用 .env 文件来设置环境变量
+    restart: always # 如果容器停止，将自动重启
