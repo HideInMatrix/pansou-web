@@ -38,7 +38,7 @@ export interface MergedLink {
 export interface SearchResponse {
   total: number;
   results: SearchResult[];
-  merged_by_type: Record<CloudType, MergedLink[]>;
+  merged_by_type: Partial<Record<CloudType, MergedLink[]>>;
 }
 
 /** 网盘类型 */

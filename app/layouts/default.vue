@@ -48,6 +48,25 @@ onMounted(() => {
       <slot />
     </main>
 
+    <!-- Footer 免责声明 -->
+    <footer class="border-t border-border bg-muted/50 mt-12">
+      <div class="mx-auto w-full md:max-w-70dvw px-4 md:px-0 py-8">
+        <div class="space-y-4 text-center">
+          <h3 class="text-lg font-semibold text-foreground">免责声明</h3>
+          <p class="text-sm text-muted-foreground leading-relaxed">
+            本站资源均来源于网络，仅供学习交流使用，严禁商业用途。<br>
+            我们不存储任何文件，仅提供搜索服务。<br> 
+            使用本站即表示您同意遵守相关法律法规，由此产生的责任与本站无关。
+          </p>
+          <p class="text-sm text-muted-foreground flex items-center gap-2 justify-center">
+            <span>📝</span>
+            <span>资源版权归原作者所有</span>
+          </p>
+        </div>
+      </div>
+    </footer>
+
+
     <ElDialog :model-value="isBlocked" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="false" width="max-content" :style="'--el-dialog-margin-top:15vh'">
       <template #header>
         <div class="flex items-center gap-2">

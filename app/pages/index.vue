@@ -1,26 +1,46 @@
-<script setup lang="ts">
-import { ref, computed, reactive } from "vue";
+<script setup lang="ts" async>
+import { ref, computed, reactive, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-import { Search, FileText, Calendar, Copy, Check } from "lucide-vue-next";
+import { Search, FileText, Calendar, Copy, Check, CircleX } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+
+import MainRandomRecommendation from "@/components/main/RandomRecommendation.vue";
+import MainHotTrending from "@/components/main/HotTrending.vue";
+
+import {formatDate} from "~~/shared/utils/time";
+
 import type {
   SearchResponse,
-  SearchResult,
   MergedLink,
   CloudType,
   CloudTypeConfig,
 } from "~~/shared/types/search";
 
+// API 响应格式定义
+interface ApiResponse {
+  code: number;
+  data: {
+    total: number;
+    results?: any[];
+    merged_by_type: Record<string, MergedLink[]>;
+  };
+}
+
 
 // API 配置
 const API_BASE_URL = "https://api.laimoyuha.com";
 
-// 搜索状态
-const searchQuery = ref("");
-const isLoading = ref(false);
+// route/router & initial params
+const route = useRoute();
+const router = useRouter();
+
+// 搜索状态（从 URL 参数初始化）
+const searchQuery = ref<string>("");
 const activeTab = ref<CloudType | "all">("all");
+const isSearching = ref(false);
 const copyStates = reactive<Record<string, boolean>>({});
 
 // 搜索结果
@@ -48,42 +68,45 @@ const cloudTypeConfigMap: Record<CloudType | "all", CloudTypeConfig> = {
   all: { label: "全部", color: "#3b82f6", icon: "📋" },
 };
 
-// 执行搜索
+// 使用 useAsyncData 来处理搜索请求
+let refreshFn: any;
+
+const { data: remoteData, pending: asyncDataPending, refresh } = await useAsyncData(
+  () => `search-data:${searchQuery.value}:${activeTab.value}`,
+  (_nuxtApp, { signal }) => {
+    // 如果没有搜索词，返回空数据
+    if (!searchQuery.value.trim()) {
+      return Promise.resolve(null);
+    }
+    // @ts-ignore
+    return $fetch(`${API_BASE_URL}/api/search`, {
+      method: "POST",
+      body: {
+        kw: searchQuery.value.trim(),
+        res: "all",
+        type: activeTab.value === "all" ? undefined : activeTab.value,
+      },
+      signal,
+    });
+  },
+  {
+    immediate: false,
+  }
+);
+
+refreshFn = refresh;
+
+// 处理搜索按钮点击 - 使用 refresh 触发请求
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) return;
+  await refreshFn();
+};
 
-  isLoading.value = true;
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/search`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        kw: searchQuery.value,
-        res: "all", // 获取所有结果用于展示
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
-    }
-
-    const data: SearchResponse = await response.json();
-    console.log(data);
-    
-    searchData.total = data.total || 0;
-    searchData.results = data.results || [];
-    searchData.merged_by_type = data.merged_by_type || {};
-    activeTab.value = "all";
-  } catch (error) {
-    console.error("Search failed:", error);
-    searchData.total = 0;
-    searchData.results = [];
-    searchData.merged_by_type = {};
-  } finally {
-    isLoading.value = false;
-  }
+// 从推荐组件触发搜索
+const handleRecommendationSearch = async (keyword: string) => {
+  searchQuery.value = keyword;
+  // 刷新数据来触发搜索
+  await refreshFn();
 };
 
 // 处理回车搜索
@@ -93,10 +116,29 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 };
 
+// 将远程数据映射到页面使用的 reactive 对象
+watch(
+  remoteData,
+  (val) => {
+    if (val) {
+      const response = val as ApiResponse;
+      const data = response?.data;
+      searchData.total = data?.total || 0;
+      searchData.results = data?.results || [];
+      searchData.merged_by_type = data?.merged_by_type || {};
+    }
+  },
+  { immediate: false }
+);
+
+// 将加载状态绑定到 useAsyncData 的 pending
+const isLoading = computed(() => asyncDataPending.value);
+
 // 计算各类型的数量
 const cloudTypeCounts = computed(() => {
   const counts: Record<CloudType, number> = {} as any;
-  Object.entries(searchData.merged_by_type).forEach(([type, links]) => {
+  const merged = searchData.merged_by_type || {};
+  Object.entries(merged).forEach(([type, links]) => {
     counts[type as CloudType] = (links as MergedLink[]).length;
   });
   return counts;
@@ -104,7 +146,8 @@ const cloudTypeCounts = computed(() => {
 
 // 获取已有的网盘类型（按照有数据的类型排序）
 const availableCloudTypes = computed(() => {
-  return Object.keys(searchData.merged_by_type) as CloudType[];
+  const merged = searchData.merged_by_type || {};
+  return Object.keys(merged) as CloudType[];
 });
 
 // 复制到剪贴板
@@ -117,16 +160,7 @@ const copyToClipboard = (text: string, key: string) => {
   });
 };
 
-// 格式化日期
-const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return "未知";
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("zh-CN");
-  } catch {
-    return "未知";
-  }
-};
+
 
 // 提取来源信息
 const parseSource = (source: string) => {
@@ -136,6 +170,17 @@ const parseSource = (source: string) => {
     return { type: "插件", name: source.slice(7) };
   }
   return { type: "未知", name: "" };
+};
+
+const handleClear = async () => {
+  // 清空搜索输入框
+  searchQuery.value = "";
+  // 重置活跃标签
+  activeTab.value = "all";
+  // 清除搜索结果数据
+  searchData.total = 0;
+  searchData.results = [];
+  searchData.merged_by_type = {};
 };
 
 const adsendId = "5901616898778649";
@@ -156,7 +201,8 @@ const slotIds = ["3130294823", "9110974380"];
               placeholder="搜索网盘资源..."
               class="w-full pr-10 h-10 text-base"
             />
-            <Search class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <CircleX class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" v-if="searchQuery" @click="handleClear" />
+            <Search class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" v-else />
           </div>
           <Button
             @click="handleSearch"
@@ -427,18 +473,19 @@ const slotIds = ["3130294823", "9110974380"];
         </div>
       </div>
 
-      <!-- 初始状态 -->
-      <div v-else-if="!isLoading" class="flex-1 flex items-center justify-center">
-        <div class="text-center">
-          <Search class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <p class="text-muted-foreground text-lg">输入关键词开始搜索</p>
-        </div>
+      <!-- 初始状态 - 展示推荐内容 -->
+      <div v-else-if="!isLoading" class="w-full flex-1 space-y-12 pb-8">
+        <!-- 随机推荐 -->
+        <MainRandomRecommendation @search="handleRecommendationSearch" />
+
+        <!-- 热点推荐 -->
+        <MainHotTrending @search="handleRecommendationSearch" />
       </div>
     </div>
   </NuxtLayout>
 </template>
 
-<style scoped lang="css">
+<style scoped lang="postcss">
  /* 平滑过渡 */
 * {
   @apply transition-all duration-200;

@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     "@unocss/nuxt",
     "@nuxtjs/color-mode",
     "@element-plus/nuxt",
-    '@vite-pwa/nuxt',
+    "@vite-pwa/nuxt",
   ],
   image: {
     domains: ["pan.micromatrix.org"],
@@ -35,7 +35,7 @@ export default defineNuxtConfig({
   nitro: {
     esbuild: {
       options: {
-        target: 'esnext',
+        target: "esnext",
       },
     },
     prerender: {
@@ -74,40 +74,43 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    '/api/upload/**': {
+    "/api/upload/**": {
       proxy: {
-        to: 'https://pan.micromatrix.org/api/**',
-      }
-    }
+        to: "https://pan.micromatrix.org/api/**",
+      },
+    },
   },
   pwa: {
-    registerType: 'autoUpdate',
+    registerType: "autoUpdate",
+    devOptions: {
+      enabled: false,
+    },
     manifest: {
-      name: 'AppStore',
-      short_name: 'AppStore',
-      theme_color: '#ffffff',
+      name: "AppStore",
+      short_name: "AppStore",
+      theme_color: "#ffffff",
       icons: [
         {
-          src: 'favicon.png',
-          sizes: '512x512',
-          type: 'image/png',
-        }
+          src: "favicon.png",
+          sizes: "512x512",
+          type: "image/png",
+        },
       ],
     },
     workbox: {
       runtimeCaching: [
         {
           urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
-          handler: 'CacheFirst',
+          handler: "CacheFirst",
           options: {
-            cacheName: 'image-cache',
+            cacheName: "image-cache",
             expiration: {
               maxEntries: 100,
               maxAgeSeconds: 7 * 24 * 60 * 60, // 1 week
             },
           },
         },
-      ]
+      ],
     },
     experimental: {
       enableWorkboxPayloadQueryParams: true,
@@ -116,10 +119,13 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      link: [{
-        rel: "manifest",
-        href: "/manifest.json"
-      },{rel: "icon", type: "image/png", href: "/favicon.png"}],
-    }
-  }
+      link: [
+        {
+          rel: "manifest",
+          href: "/manifest.json",
+        },
+        { rel: "icon", type: "image/png", href: "/favicon.png" },
+      ],
+    },
+  },
 });
