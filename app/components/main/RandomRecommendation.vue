@@ -28,12 +28,12 @@ interface ApiResponse {
   };
 }
 
-const currentKeyword = ref<string>(randomKeywords[0]!);
-const activeRecommendationType = ref<string>('all');
-
 const getRandomKeyword = (): string => {
   return randomKeywords[Math.floor(Math.random() * randomKeywords.length)]!;
 };
+
+const currentKeyword = ref<string>(getRandomKeyword());
+const activeRecommendationType = ref<string>('all');
 
 // 使用 useAsyncData 获取随机推荐数据
 const { data: remoteData, pending } = await useAsyncData(
@@ -92,6 +92,8 @@ watch(
 
 const handleRefresh = () => {
   currentKeyword.value = getRandomKeyword();
+  console.log(currentKeyword.value);
+  
 };
 
 const handleSearch = (keyword: string) => {
@@ -105,7 +107,7 @@ const handleSearch = (keyword: string) => {
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-2">
         <Sparkles class="w-5 h-5 text-yellow-500" />
-        <h2 class="text-xl font-semibold text-foreground">资源随机推荐</h2>
+        <h2 class="text-xl font-semibold text-foreground">随机推荐</h2>
       </div>
       <Button
         @click="handleRefresh"
