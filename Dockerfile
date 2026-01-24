@@ -21,7 +21,7 @@ WORKDIR /app
 
 # 只需要 .output 文件夹
 COPY --from=build /app/.output/ ./
-COPY --from=build /app/.output/server/node_modules/@sxzz/popperjs-es ./server/node_modules/@popperjs/core
+# COPY --from=build /app/.output/server/node_modules/@sxzz/popperjs-es ./server/node_modules/@popperjs/core
 
 # 设置端口和主机
 ENV PORT=3000
