@@ -476,7 +476,7 @@ const slotIds = ["3130294823", "9110974380"];
       <!-- 初始状态 - 展示推荐内容 -->
       <div v-else-if="!isLoading" class="w-full flex-1 space-y-12 pb-8">
         <!-- 随机推荐 -->
-        <MainRandomRecommendation @search="handleRecommendationSearch" />
+        <!-- <MainRandomRecommendation @search="handleRecommendationSearch" /> -->
 
         <!-- 热点推荐 -->
         <MainHotTrending @search="handleRecommendationSearch" />
