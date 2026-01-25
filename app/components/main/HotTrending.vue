@@ -35,6 +35,8 @@ const emit = defineEmits<{
   search: [keyword: string];
 }>();
 
+const router = useRouter();
+
 const routes = ref<HotRoute[]>([]);
 const selectedRoute = ref<string>('');
 const hotItems = ref<HotItem[]>([]);
@@ -81,7 +83,10 @@ const handleRouteChange = (path: string) => {
   fetchHotItems(path);
 };
 
-
+// 处理外链点击 - 跳转到提醒页面
+const handleExternalLink = (url: string) => {
+  router.push(`/leaving/${encodeURIComponent(url)}`);
+};
 
 // 格式化热度数字
 const formatHot = (hot: number = 100) => {
@@ -122,8 +127,9 @@ onMounted(() => {
 
     <!-- 热点列表 -->
     <div v-if="hotItems.length > 0" class="space-y-2">
-      <NuxtLink target="_blank" rel="noopener noreferrer" :to="item.url" v-for="(item, idx) in hotItems.slice(0, 10)"
+      <div v-for="(item, idx) in hotItems.slice(0, 10)"
         :key="item.id"
+        @click="handleExternalLink(item.url)"
         class="flex items-center gap-4 p-3 bg-card border border-border rounded-lg hover:shadow-md transition-shadow group cursor-pointer">
         <!-- 排名 -->
         <div :class="[
@@ -159,12 +165,11 @@ onMounted(() => {
 
         <!-- 外链图标 -->
         <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <a :href="item.url" target="_blank" rel="noopener noreferrer" @click.stop
-            class="p-2 hover:bg-muted rounded transition-colors">
+          <div class="p-2 hover:bg-muted rounded transition-colors">
             <ExternalLink class="w-4 h-4 text-muted-foreground" />
-          </a>
+          </div>
         </div>
-      </NuxtLink>
+      </div>
     </div>
 
     <!-- 加载中 -->
