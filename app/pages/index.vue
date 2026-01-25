@@ -72,7 +72,7 @@ const cloudTypeConfigMap: Record<CloudType | "all", CloudTypeConfig> = {
 let refreshFn: any;
 
 const { data: remoteData, pending: asyncDataPending, refresh } = await useAsyncData(
-  () => `search-data:${searchQuery.value}:${activeTab.value}`,
+  'search-results',
   (_nuxtApp, { signal }) => {
     // 如果没有搜索词，返回空数据
     if (!searchQuery.value.trim()) {
@@ -96,6 +96,13 @@ const { data: remoteData, pending: asyncDataPending, refresh } = await useAsyncD
 
 refreshFn = refresh;
 
+// 当 activeTab 变化时，刷新数据
+watch(activeTab, () => {
+  if (searchQuery.value.trim()) {
+    refreshFn();
+  }
+}, { immediate: false });
+
 // 处理搜索按钮点击 - 使用 refresh 触发请求
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) return;
@@ -111,6 +118,7 @@ const handleRecommendationSearch = async (keyword: string) => {
 
 // 处理回车搜索
 const handleKeydown = (e: KeyboardEvent) => {
+
   if (e.key === "Enter") {
     handleSearch();
   }
