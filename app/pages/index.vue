@@ -10,14 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import MainRandomRecommendation from "@/components/main/RandomRecommendation.vue";
 import MainHotTrending from "@/components/main/HotTrending.vue";
 
-import {formatDate} from "~~/shared/utils/time";
+import { formatDate } from "~~/shared/utils/time";
 
-import type {
-  SearchResponse,
-  MergedLink,
-  CloudType,
-  CloudTypeConfig,
-} from "~~/shared/types/search";
+import type { SearchResponse, MergedLink, CloudType, CloudTypeConfig } from "~~/shared/types/search";
 
 // API 响应格式定义
 interface ApiResponse {
@@ -28,7 +23,6 @@ interface ApiResponse {
     merged_by_type: Record<string, MergedLink[]>;
   };
 }
-
 
 // API 配置
 const API_BASE_URL = "https://api.laimoyuha.com";
@@ -71,8 +65,12 @@ const cloudTypeConfigMap: Record<CloudType | "all", CloudTypeConfig> = {
 // 使用 useAsyncData 来处理搜索请求
 let refreshFn: any;
 
-const { data: remoteData, pending: asyncDataPending, refresh } = await useAsyncData(
-  'search-results',
+const {
+  data: remoteData,
+  pending: asyncDataPending,
+  refresh,
+} = await useAsyncData(
+  "search-results",
   (_nuxtApp, { signal }) => {
     // 如果没有搜索词，返回空数据
     if (!searchQuery.value.trim()) {
@@ -91,17 +89,21 @@ const { data: remoteData, pending: asyncDataPending, refresh } = await useAsyncD
   },
   {
     immediate: false,
-  }
+  },
 );
 
 refreshFn = refresh;
 
 // 当 activeTab 变化时，刷新数据
-watch(activeTab, () => {
-  if (searchQuery.value.trim()) {
-    refreshFn();
-  }
-}, { immediate: false });
+watch(
+  activeTab,
+  () => {
+    if (searchQuery.value.trim()) {
+      refreshFn();
+    }
+  },
+  { immediate: false },
+);
 
 // 处理搜索按钮点击 - 使用 refresh 触发请求
 const handleSearch = async () => {
@@ -118,7 +120,6 @@ const handleRecommendationSearch = async (keyword: string) => {
 
 // 处理回车搜索
 const handleKeydown = (e: KeyboardEvent) => {
-
   if (e.key === "Enter") {
     handleSearch();
   }
@@ -136,7 +137,7 @@ watch(
       searchData.merged_by_type = data?.merged_by_type || {};
     }
   },
-  { immediate: false }
+  { immediate: false },
 );
 
 // 将加载状态绑定到 useAsyncData 的 pending
@@ -167,8 +168,6 @@ const copyToClipboard = (text: string, key: string) => {
     }, 2000);
   });
 };
-
-
 
 // 提取来源信息
 const parseSource = (source: string) => {
@@ -202,21 +201,11 @@ const slotIds = ["3130294823", "9110974380"];
       <div class="w-full mt-8 mb-8">
         <div class="flex flex-col md:flex-row gap-2 items-center justify-center">
           <div class="relative w-full md:w-96">
-            <Input
-              v-model="searchQuery"
-              @keydown="handleKeydown"
-              type="text"
-              placeholder="搜索网盘资源..."
-              class="w-full pr-10 h-10 text-base"
-            />
+            <Input v-model="searchQuery" @keydown="handleKeydown" type="text" placeholder="搜索网盘资源..." class="w-full pr-10 h-10 text-base" />
             <CircleX class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" v-if="searchQuery" @click="handleClear" />
             <Search class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" v-else />
           </div>
-          <Button
-            @click="handleSearch"
-            :disabled="isLoading || !searchQuery.trim()"
-            class="w-full md:w-auto h-10 bg-blue-600 hover:bg-blue-700 text-white"
-          >
+          <Button @click="handleSearch" :disabled="isLoading || !searchQuery.trim()" class="w-full md:w-auto h-10 bg-blue-600 hover:bg-blue-700 text-white">
             {{ isLoading ? "搜索中..." : "搜索" }}
           </Button>
         </div>
@@ -227,33 +216,20 @@ const slotIds = ["3130294823", "9110974380"];
         <!-- 结果统计 -->
         <div class="mb-6 p-4 bg-muted rounded-lg">
           <p class="text-lg font-semibold mb-3">
-            搜索结果"<span class="text-blue-600 font-bold">{{ searchQuery }}</span>" 
+            搜索结果"<span class="text-blue-600 font-bold">{{ searchQuery }}</span
+            >"
             <span class="text-blue-600">{{ searchData.total }}</span>
             条
           </p>
           <div class="flex gap-2 flex-wrap">
-            <button
-              @click="activeTab = 'all'"
-              :class="[
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                activeTab === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-background border border-input hover:bg-accent'
-              ]"
-            >
+            <button @click="activeTab = 'all'" :class="['px-4 py-2 rounded-full text-sm font-medium transition-colors', activeTab === 'all' ? 'bg-blue-600 text-white' : 'bg-background border border-input hover:bg-accent']">
               全部 ({{ searchData.total }})
             </button>
             <button
               v-for="type in availableCloudTypes"
               :key="type"
               @click="activeTab = type"
-              :class="[
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1',
-                activeTab === type
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-background border border-input hover:bg-accent'
-              ]"
-            >
+              :class="['px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1', activeTab === type ? 'bg-blue-600 text-white' : 'bg-background border border-input hover:bg-accent']">
               <span>{{ cloudTypeConfigMap[type].icon }}</span>
               {{ cloudTypeConfigMap[type].label }} ({{ cloudTypeCounts[type] }})
             </button>
@@ -262,11 +238,7 @@ const slotIds = ["3130294823", "9110974380"];
 
         <!-- 结果展示 - 全部结果（来自原始消息） -->
         <div v-if="activeTab === 'all'" class="space-y-4 mb-8">
-          <div
-            v-for="(result, index) in searchData.results"
-            :key="`result-${result.unique_id}`"
-            class="border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
-          >
+          <div v-for="(result, index) in searchData.results" :key="`result-${result.unique_id}`" class="border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
             <!-- 标题和来源 -->
             <div class="mb-3">
               <h3 class="text-base font-semibold text-foreground line-clamp-2 mb-2">
@@ -275,7 +247,7 @@ const slotIds = ["3130294823", "9110974380"];
               <div class="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-medium">来自</span>
-                  <Badge variant="outline">{{ result.channel }}</Badge>
+                  <Badge variant="outline">{{ result.channel|| "未知" }}</Badge>
                 </div>
                 <div class="flex items-center gap-1">
                   <Calendar class="w-3 h-3" />
@@ -297,37 +269,18 @@ const slotIds = ["3130294823", "9110974380"];
             </p>
 
             <!-- 图片展示 -->
-            <div
-              v-if="result.images && result.images.length > 0"
-              class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4"
-            >
-              <div
-                v-for="(image, imgIdx) in result.images.slice(0, 4)"
-                :key="`img-${result.unique_id}-${imgIdx}`"
-                class="aspect-square rounded overflow-hidden bg-muted flex items-center justify-center group"
-              >
-                <img
-                  :src="image"
-                  :alt="`result-${index}-img-${imgIdx}`"
-                  class="w-full h-full object-cover group-hover:scale-110 transition-transform cursor-pointer"
-                  loading="lazy"
-                />
+            <div v-if="result.images && result.images.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+              <div v-for="(image, imgIdx) in result.images.slice(0, 4)" :key="`img-${result.unique_id}-${imgIdx}`" class="aspect-square rounded overflow-hidden bg-muted flex items-center justify-center group">
+                <img :src="image" :alt="`result-${index}-img-${imgIdx}`" class="w-full h-full object-cover group-hover:scale-110 transition-transform cursor-pointer" loading="lazy" />
               </div>
             </div>
 
             <!-- 链接列表 -->
             <div v-if="result.links && result.links.length > 0" class="space-y-2">
-              <div
-                v-for="(link, linkIdx) in result.links"
-                :key="`link-${result.unique_id}-${linkIdx}`"
-                class="p-3 bg-muted rounded-md border border-border hover:border-blue-300 transition-colors"
-              >
+              <div v-for="(link, linkIdx) in result.links" :key="`link-${result.unique_id}-${linkIdx}`" class="p-3 bg-muted rounded-md border border-border hover:border-blue-300 transition-colors">
                 <div class="flex items-start justify-between gap-3 mb-2">
                   <div class="flex items-center gap-2">
-                    <span
-                      class="text-sm font-semibold"
-                      :style="{ color: cloudTypeConfigMap[link.type]?.color }"
-                    >
+                    <span class="text-sm font-semibold" :style="{ color: cloudTypeConfigMap[link.type]?.color }">
                       {{ cloudTypeConfigMap[link.type]?.label || link.type }}
                     </span>
                     <span class="text-xs text-muted-foreground">
@@ -346,12 +299,7 @@ const slotIds = ["3130294823", "9110974380"];
                     <code class="text-xs bg-background px-2 py-1 rounded flex-1 truncate">
                       {{ link.url }}
                     </code>
-                    <Button
-                      @click="copyToClipboard(link.url, `link-${result.unique_id}-${linkIdx}`)"
-                      size="sm"
-                      variant="outline"
-                      class="h-6 text-xs flex-shrink-0"
-                    >
+                    <Button @click="copyToClipboard(link.url, `link-${result.unique_id}-${linkIdx}`)" size="sm" variant="outline" class="h-6 text-xs flex-shrink-0">
                       <Copy v-if="!copyStates[`link-${result.unique_id}-${linkIdx}`]" class="w-3 h-3" />
                       <Check v-else class="w-3 h-3 text-green-600" />
                     </Button>
@@ -361,12 +309,7 @@ const slotIds = ["3130294823", "9110974380"];
                     <code class="text-xs bg-background px-2 py-1 rounded flex-1 truncate">
                       {{ link.password }}
                     </code>
-                    <Button
-                      @click="copyToClipboard(link.password, `pwd-${result.unique_id}-${linkIdx}`)"
-                      size="sm"
-                      variant="outline"
-                      class="h-6 text-xs flex-shrink-0"
-                    >
+                    <Button @click="copyToClipboard(link.password, `pwd-${result.unique_id}-${linkIdx}`)" size="sm" variant="outline" class="h-6 text-xs flex-shrink-0">
                       <Copy v-if="!copyStates[`pwd-${result.unique_id}-${linkIdx}`]" class="w-3 h-3" />
                       <Check v-else class="w-3 h-3 text-green-600" />
                     </Button>
@@ -380,14 +323,8 @@ const slotIds = ["3130294823", "9110974380"];
         <!-- 结果展示 - 按类型分类 -->
         <div v-else class="space-y-4 mb-8">
           <div v-if="searchData.merged_by_type[activeTab]" class="space-y-3">
-            <div class="text-sm font-semibold text-muted-foreground mb-3">
-              {{ cloudTypeConfigMap[activeTab].label }} - {{ cloudTypeCounts[activeTab] }} 个结果
-            </div>
-            <div
-              v-for="(link, linkIdx) in searchData.merged_by_type[activeTab]"
-              :key="`merged-${activeTab}-${linkIdx}`"
-              class="p-4 border border-border rounded-lg hover:shadow-md transition-shadow bg-card"
-            >
+            <div class="text-sm font-semibold text-muted-foreground mb-3">{{ cloudTypeConfigMap[activeTab].label }} - {{ cloudTypeCounts[activeTab] }} 个结果</div>
+            <div v-for="(link, linkIdx) in searchData.merged_by_type[activeTab]" :key="`merged-${activeTab}-${linkIdx}`" class="p-4 border border-border rounded-lg hover:shadow-md transition-shadow bg-card">
               <!-- 资源说明 -->
               <div class="mb-3">
                 <h4 class="font-semibold text-foreground mb-2 line-clamp-2">
@@ -396,11 +333,7 @@ const slotIds = ["3130294823", "9110974380"];
                 <div class="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                   <div class="flex items-center gap-1">
                     <span class="font-medium">来自</span>
-                    <Badge
-                      v-if="parseSource(link.source).type"
-                      :variant="parseSource(link.source).type === 'TG' ? 'default' : 'secondary'"
-                      class="text-xs"
-                    >
+                    <Badge v-if="parseSource(link.source).type" :variant="parseSource(link.source).type === 'TG' ? 'default' : 'secondary'" class="text-xs">
                       {{ parseSource(link.source).type }}
                       <span v-if="parseSource(link.source).name">:{{ parseSource(link.source).name }}</span>
                     </Badge>
@@ -413,21 +346,9 @@ const slotIds = ["3130294823", "9110974380"];
               </div>
 
               <!-- 图片 -->
-              <div
-                v-if="link.images && link.images.length > 0"
-                class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4"
-              >
-                <div
-                  v-for="(image, imgIdx) in link.images.slice(0, 4)"
-                  :key="`merged-img-${linkIdx}-${imgIdx}`"
-                  class="aspect-square rounded overflow-hidden bg-muted flex items-center justify-center group"
-                >
-                  <img
-                    :src="image"
-                    :alt="`link-${linkIdx}-img-${imgIdx}`"
-                    class="w-full h-full object-cover group-hover:scale-110 transition-transform cursor-pointer"
-                    loading="lazy"
-                  />
+              <div v-if="link.images && link.images.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                <div v-for="(image, imgIdx) in link.images.slice(0, 4)" :key="`merged-img-${linkIdx}-${imgIdx}`" class="aspect-square rounded overflow-hidden bg-muted flex items-center justify-center group">
+                  <img :src="image" :alt="`link-${linkIdx}-img-${imgIdx}`" class="w-full h-full object-cover group-hover:scale-110 transition-transform cursor-pointer" loading="lazy" />
                 </div>
               </div>
 
@@ -438,12 +359,7 @@ const slotIds = ["3130294823", "9110974380"];
                   <code class="text-xs bg-background px-2 py-1 rounded flex-1 truncate font-mono">
                     {{ link.url }}
                   </code>
-                  <Button
-                    @click="copyToClipboard(link.url, `merged-link-${linkIdx}`)"
-                    size="sm"
-                    variant="outline"
-                    class="h-6 text-xs flex-shrink-0"
-                  >
+                  <Button @click="copyToClipboard(link.url, `merged-link-${linkIdx}`)" size="sm" variant="outline" class="h-6 text-xs flex-shrink-0">
                     <Copy v-if="!copyStates[`merged-link-${linkIdx}`]" class="w-3 h-3" />
                     <Check v-else class="w-3 h-3 text-green-600" />
                   </Button>
@@ -453,12 +369,7 @@ const slotIds = ["3130294823", "9110974380"];
                   <code class="text-xs bg-background px-2 py-1 rounded flex-1 truncate font-mono">
                     {{ link.password }}
                   </code>
-                  <Button
-                    @click="copyToClipboard(link.password, `merged-pwd-${linkIdx}`)"
-                    size="sm"
-                    variant="outline"
-                    class="h-6 text-xs flex-shrink-0"
-                  >
+                  <Button @click="copyToClipboard(link.password, `merged-pwd-${linkIdx}`)" size="sm" variant="outline" class="h-6 text-xs flex-shrink-0">
                     <Copy v-if="!copyStates[`merged-pwd-${linkIdx}`]" class="w-3 h-3" />
                     <Check v-else class="w-3 h-3 text-green-600" />
                   </Button>
@@ -470,10 +381,7 @@ const slotIds = ["3130294823", "9110974380"];
       </div>
 
       <!-- 空状态 -->
-      <div
-        v-else-if="!isLoading && searchQuery"
-        class="flex-1 flex items-center justify-center"
-      >
+      <div v-else-if="!isLoading && searchQuery" class="flex-1 flex items-center justify-center">
         <div class="text-center">
           <FileText class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <p class="text-muted-foreground text-lg">未找到相关资源</p>
@@ -484,7 +392,7 @@ const slotIds = ["3130294823", "9110974380"];
       <!-- 初始状态 - 展示推荐内容 -->
       <div v-else-if="!isLoading" class="w-full flex-1 space-y-12 pb-8">
         <!-- 随机推荐 -->
-        <!-- <MainRandomRecommendation @search="handleRecommendationSearch" /> -->
+        <MainRandomRecommendation @search="handleRecommendationSearch" />
 
         <!-- 热点推荐 -->
         <MainHotTrending @search="handleRecommendationSearch" />
@@ -494,17 +402,17 @@ const slotIds = ["3130294823", "9110974380"];
 </template>
 
 <style scoped lang="postcss">
- /* 平滑过渡 */
+/* 平滑过渡 */
 * {
   @apply transition-all duration-200;
 }
 
- /* 代码块样式 */
+/* 代码块样式 */
 code {
   font-family: "Monaco", "Courier New", monospace;
 }
 
- /* 图片加载动画 */
+/* 图片加载动画 */
 img {
   @apply bg-gradient-to-r from-muted via-background to-muted bg-cover;
 }

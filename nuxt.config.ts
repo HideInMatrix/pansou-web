@@ -19,6 +19,8 @@ export default defineNuxtConfig({
     "@nuxtjs/color-mode",
     "@element-plus/nuxt",
     "@vite-pwa/nuxt",
+    "@pinia/nuxt",
+    "@nuxtjs/sitemap",
   ],
   image: {
     domains: ["pan.micromatrix.org"],
@@ -86,8 +88,8 @@ export default defineNuxtConfig({
       enabled: false,
     },
     manifest: {
-      name: "AppStore",
-      short_name: "AppStore",
+      name: "PanSou",
+      short_name: "PanSou",
       theme_color: "#ffffff",
       icons: [
         {
@@ -128,4 +130,23 @@ export default defineNuxtConfig({
       ],
     },
   },
+  sitemap: {
+    urls: async () => {
+
+      const response = await fetch("https://n9n.matrices.cf/webhook/0fd3bed6-6e5b-441b-9072-88bc06cb1a9e", { method: "get" })
+      const data = await response.json();
+      const sitemapUrls = [];
+      if (response.ok) {
+        sitemapUrls.push(...data);
+      }
+
+      return sitemapUrls.map((item: { link: string; priority: number; pubDate: string }) => {
+        return {
+          priority: 0.8,
+          loc: `/news/${encodeURIComponent(item.link)}`
+        };
+      }
+      )
+    }
+  }
 });
