@@ -14,13 +14,20 @@ export type FeedItem = {
 
 export const useNewsStore = defineStore('news', () => {
     const news = skipHydrate(useLocalStorage<FeedItem[]>('news', []))
+    const date = skipHydrate(useLocalStorage<string>('news-date',""))
 
     function newsToStore(newsInfo: FeedItem[]) {
         news.value = newsInfo
     }
 
+    function setDate (dateInfo:string){
+        date.value = dateInfo
+    }
+
     return {
         news,
-        newsToStore
+        date,
+        newsToStore,
+        setDate
     }
 })

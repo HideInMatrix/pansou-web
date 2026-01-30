@@ -1,35 +1,16 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
-import { useNewsStore, type FeedItem } from '~/store/news';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '~~/shared/utils/time';
 import { ExternalLink, Newspaper, Search } from 'lucide-vue-next';
 
-const newsStore = useNewsStore();
 const router = useRouter();
 
 
 // 使用 useAsyncData 获取随机推荐数据
-const { data: remoteData, pending } = await useAsyncData(
-  () => `rss-get`,
-  (_nuxtApp, { signal }) =>
-    // @ts-ignore
-    $fetch(`https://n9n.matrices.cf/webhook/0fd3bed6-6e5b-441b-9072-88bc06cb1a9e`, {
-      method: "GET",
-      signal,
-    }),
-  {
-    immediate: true,
-  },
-);
+const {remoteData} = useFetchRss();
 
-watch(() => remoteData.value, (newData) => {
-  if (newData) {
-    const data = newData as FeedItem[];
-    newsStore.newsToStore(data);
-  }
-}, { immediate: true });
 
 // 当前页码
 const currentPage = ref(1);
@@ -41,9 +22,9 @@ const searchKeyword = ref('');
 // 过滤和分页后的数据
 const filteredNews = computed(() => {
   if (!searchKeyword.value) {
-    return newsStore.news;
+    return remoteData.value;
   }
-  return newsStore.news.filter((item) =>
+  return remoteData.value.filter((item) =>
     item.title.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
     item.contentSnippet?.toLowerCase().includes(searchKeyword.value.toLowerCase())
   );
@@ -172,7 +153,7 @@ const handlePageChange = (page: number) => {
       </div>
 
       <!-- 暂无数据 -->
-      <div v-else-if="newsStore.news.length === 0" class="flex items-center justify-center py-16">
+      <div v-else-if="remoteData.length === 0" class="flex items-center justify-center py-16">
         <div class="text-center">
           <Newspaper class="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
           <p class="text-lg text-muted-foreground">暂无新闻数据</p>

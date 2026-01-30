@@ -1,48 +1,46 @@
 <script setup lang="ts" async>
 import { computed } from "vue";
-import { Sparkles,CalendarDays } from "lucide-vue-next";
+import { Sparkles, CalendarDays, Shuffle } from "lucide-vue-next";
 
 import { formatDate } from "~~/shared/utils/time";
 import type { FeedItem } from "~/store/news";
-import { useNewsStore } from "~/store/news";
 
 const emit = defineEmits<{
   search: [keyword: string];
 }>();
 
-const newsStore = useNewsStore();
 const router = useRouter();
+const seed = ref(0);
 
-// 使用 useAsyncData 获取随机推荐数据
-const { data: remoteData, pending } = await useAsyncData(
-  () => `rss-get`,
-  (_nuxtApp, { signal }) =>
-    // @ts-ignore
-    $fetch(`https://n9n.matrices.cf/webhook/0fd3bed6-6e5b-441b-9072-88bc06cb1a9e`, {
-      method: "GET",
-      signal,
-    }),
-  {
-    immediate: true,
-  },
-);
+const { remoteData, pendingFlag } = useFetchRss();
 
-// 从 API 响应中提取真实的 merged_by_type 数据
+function pickRandom<T>(arr: T[], n: number) {
+  if (!arr?.length) return [];
+  const copy = arr.slice();
+  // Fisher–Yates shuffle
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
+  }
+  return copy.slice(0, Math.min(n, copy.length));
+}
 const recommendation = computed(() => {
   if (remoteData.value) {
+    seed.value;
     const data = remoteData.value as FeedItem[];
-    const filteredData = data.filter((item, index) => index < 3);
-    if(data.length > 0){
-      newsStore.newsToStore(data);
-    }
+    const filteredData = pickRandom(data, 3);
     return filteredData;
   }
   return [];
 });
 
-const navigateToPath = (path:string) => {
+const shuffleRecommendation = () => {
+  seed.value++;
+};
+
+const navigateToPath = (path: string) => {
   router.push(`/news/${encodeURIComponent(path)}`);
-}
+};
 </script>
 
 <template>
@@ -52,6 +50,10 @@ const navigateToPath = (path:string) => {
         <Sparkles class="w-5 h-5 text-yellow-500" />
         <h2 class="text-xl font-semibold text-foreground">随机推荐</h2>
       </div>
+      <Button class="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-border bg-card hover:bg-accent transition-colors disabled:opacity-50 cursor-pointer" :disabled="pendingFlag || !remoteData?.length" @click="shuffleRecommendation">
+        <Shuffle class="w-4 h-4" />
+        换一换
+      </Button>
     </div>
 
     <div v-if="recommendation.length > 0" class="space-y-3">
@@ -68,9 +70,7 @@ const navigateToPath = (path:string) => {
 
         <!-- 底部元信息 -->
         <div class="flex items-center justify-between text-xs text-muted-foreground">
-          <span class="flex items-center gap-1">
-            <CalendarDays />{{ formatDate(link.pubDate) }}
-          </span>
+          <span class="flex items-center gap-1"> <CalendarDays />{{ formatDate(link.pubDate) }} </span>
           <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <span class="px-2 py-1 bg-muted rounded hover:bg-accent transition-colors cursor-pointer">查看</span>
           </div>
@@ -79,7 +79,7 @@ const navigateToPath = (path:string) => {
     </div>
 
     <!-- 加载中状态 -->
-    <div v-else-if="pending" class="flex items-center justify-center py-12">
+    <div v-else-if="pendingFlag" class="flex items-center justify-center py-12">
       <div class="text-center">
         <p class="text-muted-foreground">加载推荐中...</p>
       </div>
