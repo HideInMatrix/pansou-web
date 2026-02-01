@@ -45,7 +45,7 @@ const navigateToPath = (path: string) => {
 
 <template>
   <div class="w-full">
-    <div class="flex items-center justify-between mb-6">
+    <LazyNuxtLink to="/news" class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-2">
         <Sparkles class="w-5 h-5 text-yellow-500" />
         <h2 class="text-xl font-semibold text-foreground">文章推荐</h2>
@@ -54,7 +54,7 @@ const navigateToPath = (path: string) => {
         <Shuffle class="w-4 h-4 text-foreground" />
         换一换
       </Button>
-    </div>
+    </LazyNuxtLink>
 
     <div v-if="recommendation.length > 0" class="space-y-3">
       <div v-for="(link, idx) in recommendation" :key="idx" class="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow cursor-pointer group" @click="navigateToPath(link.link)">
