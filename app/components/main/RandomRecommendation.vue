@@ -28,7 +28,7 @@ const recommendation = computed(() => {
   if (remoteData.value) {
     seed.value;
     const data = remoteData.value as FeedItem[];
-    const filteredData = pickRandom(data, 3);
+    const filteredData = pickRandom(data, 10);
     return filteredData;
   }
   return [];
@@ -48,7 +48,7 @@ const navigateToPath = (path: string) => {
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-2">
         <Sparkles class="w-5 h-5 text-yellow-500" />
-        <h2 class="text-xl font-semibold text-foreground">随机推荐</h2>
+        <h2 class="text-xl font-semibold text-foreground">文章推荐</h2>
       </div>
       <Button class="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-border bg-card hover:bg-accent transition-colors disabled:opacity-50 cursor-pointer" :disabled="pendingFlag || !remoteData?.length" @click="shuffleRecommendation">
         <Shuffle class="w-4 h-4" />
