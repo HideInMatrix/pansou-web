@@ -50,8 +50,8 @@ const navigateToPath = (path: string) => {
         <Sparkles class="w-5 h-5 text-yellow-500" />
         <h2 class="text-xl font-semibold text-foreground">文章推荐</h2>
       </div>
-      <Button class="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-border bg-card hover:bg-accent transition-colors disabled:opacity-50 cursor-pointer" :disabled="pendingFlag || !remoteData?.length" @click="shuffleRecommendation">
-        <Shuffle class="w-4 h-4" />
+      <Button class="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-80 cursor-pointer" :disabled="pendingFlag || !remoteData?.length" @click="shuffleRecommendation">
+        <Shuffle class="w-4 h-4 text-foreground" />
         换一换
       </Button>
     </div>
