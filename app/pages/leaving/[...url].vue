@@ -5,6 +5,16 @@ import { AlertTriangle, ArrowRight, ChevronLeft } from 'lucide-vue-next';
 const router = useRouter();
 const route = useRoute();
 
+useSeoMeta({
+  title: '离开确认 - 来摸鱼哈',
+  description: '您即将离开来摸鱼哈网站，访问外部链接。请确认是否继续。',
+  keywords: '离开确认,外部链接,来摸鱼哈',
+  ogTitle: '离开确认 - 来摸鱼哈',
+  ogDescription: '您即将离开来摸鱼哈网站，访问外部链接。请确认是否继续。',
+  ogImage: '/og-image.png',
+  twitterCard: 'summary_large_image',
+});
+
 const externalUrl = ref<string>('');
 const isRedirecting = ref(false);
 

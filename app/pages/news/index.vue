@@ -7,6 +7,16 @@ import { ExternalLink, Newspaper, Search } from 'lucide-vue-next';
 
 const router = useRouter();
 
+useSeoMeta({
+  title: '新闻资讯 - 来摸鱼哈',
+  description: '浏览最新的新闻资讯和资源更新，了解网盘资源动态。',
+  keywords: '新闻,资讯,网盘资源,来摸鱼哈',
+  ogTitle: '新闻资讯 - 来摸鱼哈',
+  ogDescription: '浏览最新的新闻资讯和资源更新，了解网盘资源动态。',
+  ogImage: '/og-image.png',
+  twitterCard: 'summary_large_image',
+});
+
 
 // 使用 useAsyncData 获取随机推荐数据
 const {remoteData} = useFetchRss();

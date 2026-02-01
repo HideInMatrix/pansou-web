@@ -22,6 +22,16 @@ const currentNews = computed(() => {
   return newsStore.news.find((item) => item.link === encodedUrl.value);
 });
 
+useSeoMeta({
+  title: computed(() => currentNews.value ? `${currentNews.value.title} - 来摸鱼哈` : '新闻详情 - 来摸鱼哈'),
+  description: computed(() => currentNews.value ? currentNews.value.contentSnippet || '查看详细新闻内容' : '浏览新闻详情'),
+  keywords: '新闻,详情,网盘资源,来摸鱼哈',
+  ogTitle: computed(() => currentNews.value ? `${currentNews.value.title} - 来摸鱼哈` : '新闻详情 - 来摸鱼哈'),
+  ogDescription: computed(() => currentNews.value ? currentNews.value.contentSnippet || '查看详细新闻内容' : '浏览新闻详情'),
+  ogImage: '/og-image.png',
+  twitterCard: 'summary_large_image',
+});
+
 // 返回列表
 const goBack = () => {
   router.back();

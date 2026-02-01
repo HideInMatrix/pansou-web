@@ -14,6 +14,16 @@ import { formatDate } from "~~/shared/utils/time";
 
 import type { SearchResponse, MergedLink, CloudType, CloudTypeConfig } from "~~/shared/types/search";
 
+useSeoMeta({
+  title: '来摸鱼哈 - 网盘资源搜索平台',
+  description: '来摸鱼哈是一个强大的网盘资源搜索平台，支持百度网盘、阿里云盘、夸克网盘等多种网盘类型，帮助您快速找到所需的资源。',
+  keywords: '网盘搜索,百度网盘,阿里云盘,夸克网盘,资源搜索,来摸鱼哈',
+  ogTitle: '来摸鱼哈 - 网盘资源搜索平台',
+  ogDescription: '快速搜索网盘资源，支持多种网盘类型，免费分享资源。',
+  ogImage: '/og-image.png',
+  twitterCard: 'summary_large_image',
+});
+
 // API 响应格式定义
 interface ApiResponse {
   code: number;

@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { GalleryVerticalEnd } from "lucide-vue-next";
+
+useSeoMeta({
+  title: '登录 - 来摸鱼哈',
+  description: '登录来摸鱼哈账号，享受更多个性化服务和资源推荐。',
+  keywords: '登录,来摸鱼哈,账号',
+  ogTitle: '登录 - 来摸鱼哈',
+  ogDescription: '登录来摸鱼哈账号，享受更多个性化服务和资源推荐。',
+  ogImage: '/og-image.png',
+  twitterCard: 'summary_large_image',
+});
 </script>
 
 <template>
@@ -11,7 +21,7 @@ import { GalleryVerticalEnd } from "lucide-vue-next";
             <div class="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd class="size-4" />
             </div>
-            骷髅头网站分享社区
+            来摸鱼哈
           </a>
         </div>
         <div class="flex flex-1 items-center justify-center">
