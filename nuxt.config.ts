@@ -1,5 +1,64 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { readdir, readFile } from "node:fs/promises";
+import { basename, join } from "node:path";
 import Unocss from "unocss/vite";
+
+const FRONTMATTER_BLOCK_RE = /^---\r?\n([\s\S]*?)\r?\n---/;
+
+function extractFrontmatterValue(frontmatter: string, key: string): string | undefined {
+  const match = frontmatter.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
+  if (!match) {
+    return undefined;
+  }
+
+  const rawValue = match.at(1);
+  if (typeof rawValue !== "string") {
+    return undefined;
+  }
+
+  const value = rawValue.trim().replace(/^['"]|['"]$/g, "");
+  return value || undefined;
+}
+
+async function getMarkdownFiles(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return getMarkdownFiles(fullPath);
+      }
+      return entry.isFile() && entry.name.endsWith(".md") ? [fullPath] : [];
+    }),
+  );
+
+  return files.flat();
+}
+
+async function buildArticleSitemapUrls() {
+  const articlesDir = join(process.cwd(), "content", "articles");
+  const markdownFiles = await getMarkdownFiles(articlesDir).catch(() => []);
+  const locSet = new Set<string>();
+  const urls: string[] = [];
+
+  for (const filePath of markdownFiles) {
+    const raw = await readFile(filePath, "utf-8");
+    const frontmatter = raw.match(FRONTMATTER_BLOCK_RE)?.[1] ?? "";
+    const permalink = extractFrontmatterValue(frontmatter, "permalink");
+
+    const fallbackPath = `/archives/${basename(filePath, ".md")}`;
+    const loc = permalink ? (permalink.startsWith("/") ? permalink : `/${permalink}`) : fallbackPath;
+
+    if (locSet.has(loc)) {
+      continue;
+    }
+
+    urls.push(loc);
+    locSet.add(loc);
+  }
+
+  return urls;
+}
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
@@ -21,7 +80,18 @@ export default defineNuxtConfig({
     "@vite-pwa/nuxt",
     "@pinia/nuxt",
     "@nuxtjs/sitemap",
+    "@nuxt/content",
   ],
+  content: {
+    // Runtime: use WASM-based PGlite to avoid native binary dependency (better-sqlite3).
+    database: {
+      type: "pglite",
+    },
+    // Build/dev local cache DB: use Node native sqlite connector on Node >= 22.5.
+    experimental: {
+      sqliteConnector: "native",
+    },
+  },
   image: {
     domains: ["pan.micromatrix.org"],
   },
@@ -132,21 +202,7 @@ export default defineNuxtConfig({
   },
   sitemap: {
     urls: async () => {
-
-      const response = await fetch("https://n9n.matrices.cf/webhook/0fd3bed6-6e5b-441b-9072-88bc06cb1a9e", { method: "get" })
-      const data = await response.json();
-      const sitemapUrls = [];
-      if (response.ok) {
-        sitemapUrls.push(...data);
-      }
-
-      return sitemapUrls.map((item: { link: string; priority: number; pubDate: string }) => {
-        return {
-          priority: 0.8,
-          loc: `/news/${encodeURIComponent(item.link)}`
-        };
-      }
-      )
-    }
-  }
+      return buildArticleSitemapUrls();
+    },
+  },
 });

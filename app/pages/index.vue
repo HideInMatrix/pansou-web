@@ -2,7 +2,7 @@
 import { ref, computed, reactive, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-import { Search, FileText, Calendar, Copy, Check, CircleX } from "lucide-vue-next";
+import { Search, FileText, Calendar, Copy, Check, CircleX, ArrowRight } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,13 +15,13 @@ import { formatDate } from "~~/shared/utils/time";
 import type { SearchResponse, MergedLink, CloudType, CloudTypeConfig } from "~~/shared/types/search";
 
 useSeoMeta({
-  title: '来摸鱼哈 - 网盘资源搜索平台',
-  description: '来摸鱼哈是一个强大的网盘资源搜索平台，支持百度网盘、阿里云盘、夸克网盘等多种网盘类型，帮助您快速找到所需的资源。',
-  keywords: '网盘搜索,百度网盘,阿里云盘,夸克网盘,资源搜索,来摸鱼哈',
-  ogTitle: '来摸鱼哈 - 网盘资源搜索平台',
-  ogDescription: '快速搜索网盘资源，支持多种网盘类型，免费分享资源。',
-  ogImage: '/og-image.png',
-  twitterCard: 'summary_large_image',
+  title: "来摸鱼哈 - 网盘资源搜索平台",
+  description: "来摸鱼哈是一个强大的网盘资源搜索平台，支持百度网盘、阿里云盘、夸克网盘等多种网盘类型，帮助您快速找到所需的资源。",
+  keywords: "网盘搜索,百度网盘,阿里云盘,夸克网盘,资源搜索,来摸鱼哈",
+  ogTitle: "来摸鱼哈 - 网盘资源搜索平台",
+  ogDescription: "快速搜索网盘资源，支持多种网盘类型，免费分享资源。",
+  ogImage: "/og-image.png",
+  twitterCard: "summary_large_image",
 });
 
 // API 响应格式定义
@@ -32,6 +32,16 @@ interface ApiResponse {
     results?: any[];
     merged_by_type: Record<string, MergedLink[]>;
   };
+}
+
+interface HomeArticleFile {
+  title: string;
+  path: string;
+  date?: string;
+  excerpt?: string;
+  permalink?: string;
+  categories?: string[];
+  tags?: string[];
 }
 
 // API 配置
@@ -202,6 +212,20 @@ const handleClear = async () => {
 
 const adsendId = "5901616898778649";
 const slotIds = ["3130294823", "9110974380"];
+
+const { data: articleFiles, pending: articleFilesPending } = await useAsyncData("home-article-files", async () => {
+  return queryCollection("articles").where("extension", "=", "md").select("title", "path", "date", "excerpt", "permalink", "categories", "tags").order("date", "DESC").limit(10).all();
+});
+
+const fileList = computed<HomeArticleFile[]>(() => (articleFiles.value as HomeArticleFile[] | null) ?? []);
+
+const toFileLink = (item: HomeArticleFile) => {
+  const permalink = item.permalink?.trim();
+  if (permalink) {
+    return permalink.startsWith("/") ? permalink : `/${permalink}`;
+  }
+  return item.path;
+};
 </script>
 
 <template>
@@ -257,7 +281,7 @@ const slotIds = ["3130294823", "9110974380"];
               <div class="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-medium">来自</span>
-                  <Badge variant="outline">{{ result.channel|| "未知" }}</Badge>
+                  <Badge variant="outline">{{ result.channel || "未知" }}</Badge>
                 </div>
                 <div class="flex items-center gap-1">
                   <Calendar class="w-3 h-3" />
@@ -401,6 +425,41 @@ const slotIds = ["3130294823", "9110974380"];
 
       <!-- 初始状态 - 展示推荐内容 -->
       <div v-else-if="!isLoading" class="w-full flex-1 space-y-12 pb-8">
+        <!-- 文件列表 -->
+        <section class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg md:text-xl font-semibold">文件列表</h2>
+            <Badge variant="outline">共 {{ fileList.length }} 篇</Badge>
+          </div>
+
+          <div v-if="articleFilesPending" class="text-sm text-muted-foreground">正在加载文件列表...</div>
+
+          <div v-else-if="fileList.length > 0" class="space-y-3">
+            <NuxtLink v-for="item in fileList" :key="item.path" :to="toFileLink(item)" class="block p-4 border border-border rounded-lg hover:shadow-md hover:border-blue-300 transition-all bg-card">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h3 class="font-semibold line-clamp-2">{{ item.title }}</h3>
+                  <p v-if="item.excerpt" class="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {{ item.excerpt }}
+                  </p>
+                  <div class="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
+                    <span class="inline-flex items-center gap-1">
+                      <Calendar class="w-3 h-3" />
+                      {{ formatDate(item.date) }}
+                    </span>
+                    <Badge v-for="category in item.categories || []" :key="`home-category-${item.path}-${category}`" variant="secondary" class="text-xs">
+                      {{ category }}
+                    </Badge>
+                  </div>
+                </div>
+                <ArrowRight class="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+              </div>
+            </NuxtLink>
+          </div>
+
+          <div v-else class="text-sm text-muted-foreground">暂无文件</div>
+        </section>
+
         <!-- 随机推荐 -->
         <MainRandomRecommendation @search="handleRecommendationSearch" />
 

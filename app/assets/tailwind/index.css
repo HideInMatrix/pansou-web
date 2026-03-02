@@ -30,3 +30,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, rgb(128 128 128 / 5%) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(128 128 128 / 5%) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .bg-checkerboard {
+    background-image:
+      linear-gradient(45deg, #e4e4e7 25%, transparent 25%),
+      linear-gradient(-45deg, #e4e4e7 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e4e4e7 75%),
+      linear-gradient(-45deg, transparent 75%, #e4e4e7 75%);
+    background-size: 20px 20px;
+  }
+}
