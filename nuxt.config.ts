@@ -63,7 +63,7 @@ async function buildArticleSitemapUrls() {
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
-  css: ["@unocss/reset/normalize.css"],
+  css: ["@unocss/reset/normalize.css", "katex/dist/katex.min.css"],
   devServer: {
     port: 3002,
   },
@@ -86,6 +86,16 @@ export default defineNuxtConfig({
     // Runtime: use WASM-based PGlite to avoid native binary dependency (better-sqlite3).
     database: {
       type: "pglite",
+    },
+    build: {
+      markdown: {
+        remarkPlugins: {
+          "remark-math": {},
+        },
+        rehypePlugins: {
+          "rehype-katex": {},
+        },
+      },
     },
     // Build/dev local cache DB: use Node native sqlite connector on Node >= 22.5.
     experimental: {
