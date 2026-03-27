@@ -1,40 +1,41 @@
 <script setup lang="ts" async>
 import { computed, ref, watch } from "vue";
-import { ArrowRight, CalendarDays, FileText, Filter, Loader2, Search, Tag, Wrench } from "lucide-vue-next";
+import { ArrowLeft, ArrowRight, CalendarDays, FileText, Filter, Loader2, Search, Tag, Wrench } from "lucide-vue-next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "~~/shared/utils/time";
 
+interface ArticleTagItem {
+  id: string;
+  slug: string;
+  name: string;
+}
+
 interface ArticleItem {
+  id: string;
+  slug: string;
   title: string;
-  path: string;
-  id?: string;
-  date?: string;
-  auther?: string;
-  author?: string;
-  cover?: string;
-  excerpt?: string;
-  permalink?: string;
-  categories?: string[];
-  tags?: string[];
+  excerpt: string;
+  category: string;
+  authorName: string;
+  readTimeMinutes: number;
+  publishedAt: string;
+  tags: ArticleTagItem[];
 }
 
 useSeoMeta({
   title: "文章归档 - 来摸鱼哈",
-  description: "基于 Markdown 的文章列表，支持分类、标签和关键词筛选。",
-  keywords: "文章列表,markdown,归档,Nuxt Content,来摸鱼哈",
+  description: "基于数据库的文章归档，支持分类、标签和关键词筛选。",
+  keywords: "文章列表,文章归档,Prisma,PostgreSQL,来摸鱼哈",
   ogTitle: "文章归档 - 来摸鱼哈",
   ogDescription: "浏览站点归档文章，快速定位目标内容。",
 });
 
-const { data, pending, error } = await useAsyncData("content-articles-list", async () => {
-  return queryCollection("articles")
-    .where("extension", "=", "md")
-    .select("title", "path", "id", "date", "auther", "author", "cover", "excerpt", "permalink", "categories", "tags")
-    .order("date", "DESC")
-    .all();
+const { data, pending, error } = await useAsyncData("archive-articles-list", async () => {
+  const response = await $fetch<{ articles: ArticleItem[] }>("/api/articles");
+  return response.articles;
 });
 
 const keyword = ref("");
@@ -48,21 +49,21 @@ const articles = computed<ArticleItem[]>(() => (data.value as ArticleItem[] | nu
 const categories = computed(() => {
   const values = new Set<string>();
   for (const article of articles.value) {
-    for (const category of article.categories ?? []) {
-      values.add(category);
+    if (article.category) {
+      values.add(article.category);
     }
   }
   return ["all", ...Array.from(values)];
 });
 
 const tags = computed(() => {
-  const values = new Set<string>();
+  const values = new Map<string, ArticleTagItem>();
   for (const article of articles.value) {
-    for (const tag of article.tags ?? []) {
-      values.add(tag);
+    for (const tag of article.tags) {
+      values.set(tag.slug, tag);
     }
   }
-  return ["all", ...Array.from(values)];
+  return [{ id: "all", slug: "all", name: "全部" }, ...Array.from(values.values())];
 });
 
 const filteredArticles = computed(() => {
@@ -71,13 +72,13 @@ const filteredArticles = computed(() => {
   return articles.value.filter((article) => {
     const matchesText = !text
       || article.title.toLowerCase().includes(text)
-      || (article.excerpt ?? "").toLowerCase().includes(text)
-      || (article.auther ?? article.author ?? "").toLowerCase().includes(text)
-      || (article.categories ?? []).join(" ").toLowerCase().includes(text)
-      || (article.tags ?? []).join(" ").toLowerCase().includes(text);
+      || article.excerpt.toLowerCase().includes(text)
+      || article.authorName.toLowerCase().includes(text)
+      || article.category.toLowerCase().includes(text)
+      || article.tags.some((tag) => `${tag.name} ${tag.slug}`.toLowerCase().includes(text));
 
-    const matchesCategory = selectedCategory.value === "all" || (article.categories ?? []).includes(selectedCategory.value);
-    const matchesTag = selectedTag.value === "all" || (article.tags ?? []).includes(selectedTag.value);
+    const matchesCategory = selectedCategory.value === "all" || article.category === selectedCategory.value;
+    const matchesTag = selectedTag.value === "all" || article.tags.some((tag) => tag.slug === selectedTag.value);
 
     return matchesText && matchesCategory && matchesTag;
   });
@@ -100,14 +101,13 @@ watch(totalPages, (value) => {
   }
 });
 
-const resolveAuthor = (article: ArticleItem) => article.auther || article.author || "匿名";
-
 const resolveLink = (article: ArticleItem) => {
-  const permalink = article.permalink?.trim();
-  if (permalink) {
-    return permalink.startsWith("/") ? permalink : `/${permalink}`;
-  }
-  return article.path;
+  const slug = article.slug
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  return `/archives/${slug}`;
 };
 </script>
 
@@ -122,12 +122,20 @@ const resolveLink = (article: ArticleItem) => {
             </div>
             <div>
               <h1 class="text-2xl font-semibold md:text-3xl">文章归档</h1>
-              <p class="text-sm text-zinc-500 dark:text-zinc-400">Markdown 内容自动索引与检索</p>
+              <p class="text-sm text-zinc-500 dark:text-zinc-400">数据库文章内容索引与检索</p>
             </div>
           </div>
-          <Badge class="border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
-            共 {{ filteredArticles.length }} 篇
-          </Badge>
+          <div class="flex items-center gap-2">
+            <Button variant="outline" size="sm" as-child>
+              <NuxtLink to="/">
+                <ArrowLeft class="h-4 w-4" />
+                返回首页
+              </NuxtLink>
+            </Button>
+            <Badge class="border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300">
+              共 {{ filteredArticles.length }} 篇
+            </Badge>
+          </div>
         </header>
   
         <div class="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
@@ -175,13 +183,13 @@ const resolveLink = (article: ArticleItem) => {
                   <div class="flex flex-wrap gap-2">
                     <Button
                       v-for="tag in tags"
-                      :key="`tag-${tag}`"
-                      :variant="selectedTag === tag ? 'default' : 'outline'"
+                      :key="`tag-${tag.slug}`"
+                      :variant="selectedTag === tag.slug ? 'default' : 'outline'"
                       size="sm"
                       class="h-7"
-                      @click="selectedTag = tag"
+                      @click="selectedTag = tag.slug"
                     >
-                      {{ tag === 'all' ? '全部' : `#${tag}` }}
+                      {{ tag.slug === 'all' ? '全部' : `#${tag.name}` }}
                     </Button>
                   </div>
                 </div>
@@ -201,7 +209,7 @@ const resolveLink = (article: ArticleItem) => {
   
               <div v-else-if="error" class="bg-checkerboard rounded-2xl border border-zinc-200 p-8 text-center dark:border-zinc-800">
                 <p class="text-lg font-semibold">内容读取失败</p>
-                <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">请检查 markdown 文件格式或稍后重试。</p>
+                <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">请检查数据库连接或稍后重试。</p>
               </div>
   
               <div v-else-if="paginatedArticles.length === 0" class="bg-checkerboard rounded-2xl border border-zinc-200 p-8 text-center dark:border-zinc-800">
@@ -212,7 +220,7 @@ const resolveLink = (article: ArticleItem) => {
               <div v-else class="space-y-4">
                 <NuxtLink
                   v-for="article in paginatedArticles"
-                  :key="article.id || article.path"
+                  :key="article.id"
                   :to="resolveLink(article)"
                   class="group block rounded-2xl border border-zinc-200 bg-white/95 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10 dark:border-zinc-800 dark:bg-zinc-900/95 dark:hover:border-indigo-500/60"
                 >
@@ -220,9 +228,11 @@ const resolveLink = (article: ArticleItem) => {
                     <div class="min-w-0">
                       <div class="mb-2 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                         <CalendarDays class="h-4 w-4 text-blue-600 transition-transform duration-300 group-hover:rotate-3 dark:text-indigo-400" />
-                        {{ formatDate(article.date) }}
+                        {{ formatDate(article.publishedAt) }}
                         <span class="text-zinc-300 dark:text-zinc-700">|</span>
-                        <span>{{ resolveAuthor(article) }}</span>
+                        <span>{{ article.authorName || "匿名" }}</span>
+                        <span class="text-zinc-300 dark:text-zinc-700">|</span>
+                        <span>{{ article.readTimeMinutes }} 分钟阅读</span>
                       </div>
                       <h3 class="mb-2 line-clamp-2 text-lg font-semibold text-zinc-900 transition-colors group-hover:text-blue-700 dark:text-zinc-100 dark:group-hover:text-indigo-300">
                         {{ article.title }}
@@ -231,19 +241,15 @@ const resolveLink = (article: ArticleItem) => {
                         {{ article.excerpt || "暂无摘要内容" }}
                       </p>
                       <div class="mt-4 flex flex-wrap gap-2">
-                        <Badge
-                          v-for="category in article.categories || []"
-                          :key="`cat-${article.path}-${category}`"
-                          variant="outline"
-                        >
-                          {{ category }}
+                        <Badge variant="outline">
+                          {{ article.category }}
                         </Badge>
                         <Badge
-                          v-for="tag in article.tags || []"
-                          :key="`tag-${article.path}-${tag}`"
+                          v-for="tag in article.tags"
+                          :key="`tag-${article.id}-${tag.slug}`"
                           class="border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300"
                         >
-                          #{{ tag }}
+                          #{{ tag.name }}
                         </Badge>
                       </div>
                     </div>

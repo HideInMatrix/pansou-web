@@ -1,13 +1,11 @@
 <script setup lang="ts" async>
 import { ref, computed, reactive, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
 
 import { Search, FileText, Calendar, Copy, Check, CircleX, ArrowRight } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-import MainRandomRecommendation from "@/components/main/RandomRecommendation.vue";
 import MainHotTrending from "@/components/main/HotTrending.vue";
 
 import { formatDate } from "~~/shared/utils/time";
@@ -35,21 +33,23 @@ interface ApiResponse {
 }
 
 interface HomeArticleFile {
+  id: string;
+  slug: string;
   title: string;
-  path: string;
-  date?: string;
-  excerpt?: string;
-  permalink?: string;
-  categories?: string[];
-  tags?: string[];
+  excerpt: string;
+  category: string;
+  authorName: string;
+  readTimeMinutes: number;
+  publishedAt: string;
+  tags: Array<{
+    id: string;
+    slug: string;
+    name: string;
+  }>;
 }
 
 // API 配置
 const API_BASE_URL = "https://api.laimoyuha.com";
-
-// route/router & initial params
-const route = useRoute();
-const router = useRouter();
 
 // 搜索状态（从 URL 参数初始化）
 const searchQuery = ref<string>("");
@@ -214,17 +214,24 @@ const adsendId = "5901616898778649";
 const slotIds = ["3130294823", "9110974380"];
 
 const { data: articleFiles, pending: articleFilesPending } = await useAsyncData("home-article-files", async () => {
-  return queryCollection("articles").where("extension", "=", "md").select("title", "path", "date", "excerpt", "permalink", "categories", "tags").order("date", "DESC").limit(10).all();
+  const response = await $fetch<{ articles: HomeArticleFile[] }>("/api/articles", {
+    query: {
+      limit: 10,
+    },
+  });
+
+  return response.articles;
 });
 
 const fileList = computed<HomeArticleFile[]>(() => (articleFiles.value as HomeArticleFile[] | null) ?? []);
 
 const toFileLink = (item: HomeArticleFile) => {
-  const permalink = item.permalink?.trim();
-  if (permalink) {
-    return permalink.startsWith("/") ? permalink : `/${permalink}`;
-  }
-  return item.path;
+  const slug = item.slug
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  return `/archives/${slug}`;
 };
 </script>
 
@@ -423,7 +430,7 @@ const toFileLink = (item: HomeArticleFile) => {
         </div>
       </div>
 
-      <!-- 初始状态 - 展示推荐内容 -->
+      <!-- 初始状态 -->
       <div v-else-if="!isLoading" class="w-full flex-1 space-y-12 pb-8">
         <!-- 文件列表 -->
         <section class="space-y-4">
@@ -435,20 +442,25 @@ const toFileLink = (item: HomeArticleFile) => {
           <div v-if="articleFilesPending" class="text-sm text-muted-foreground">正在加载文件列表...</div>
 
           <div v-else-if="fileList.length > 0" class="space-y-3">
-            <NuxtLink v-for="item in fileList" :key="item.path" :to="toFileLink(item)" class="block p-4 border border-border rounded-lg hover:shadow-md hover:border-blue-300 transition-all bg-card">
+            <NuxtLink v-for="item in fileList" :key="item.id" :to="toFileLink(item)" class="block p-4 border border-border rounded-lg hover:shadow-md hover:border-blue-300 transition-all bg-card">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <h3 class="font-semibold line-clamp-2">{{ item.title }}</h3>
-                  <p v-if="item.excerpt" class="text-sm text-muted-foreground mt-1 line-clamp-2">
+                  <p class="text-sm text-muted-foreground mt-1 line-clamp-2">
                     {{ item.excerpt }}
                   </p>
                   <div class="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
                     <span class="inline-flex items-center gap-1">
                       <Calendar class="w-3 h-3" />
-                      {{ formatDate(item.date) }}
+                      {{ formatDate(item.publishedAt) }}
                     </span>
-                    <Badge v-for="category in item.categories || []" :key="`home-category-${item.path}-${category}`" variant="secondary" class="text-xs">
-                      {{ category }}
+                    <span>{{ item.authorName || "匿名" }}</span>
+                    <span>{{ item.readTimeMinutes }} 分钟阅读</span>
+                    <Badge variant="secondary" class="text-xs">
+                      {{ item.category }}
+                    </Badge>
+                    <Badge v-for="tag in item.tags" :key="`home-tag-${item.id}-${tag.slug}`" variant="outline" class="text-xs">
+                      #{{ tag.name }}
                     </Badge>
                   </div>
                 </div>
@@ -459,9 +471,6 @@ const toFileLink = (item: HomeArticleFile) => {
 
           <div v-else class="text-sm text-muted-foreground">暂无文件</div>
         </section>
-
-        <!-- 随机推荐 -->
-        <MainRandomRecommendation @search="handleRecommendationSearch" />
 
         <!-- 热点推荐 -->
         <MainHotTrending @search="handleRecommendationSearch" />

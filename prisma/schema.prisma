@@ -1,10 +1,75 @@
 generator client {
-    provider = "prisma-client"
-    output   = "../generated/prisma"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-    provider = "postgresql"
-   
+  provider = "postgresql"
 }
 
+model Article {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  titleEn         String?
+  titleZhHant     String?
+  excerpt         String
+  excerptEn       String?
+  excerptZhHant   String?
+  content         String
+  contentEn       String?
+  contentZhHant   String?
+  category        String
+  authorName      String
+  readTimeMinutes Int
+  publishedAt     DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  comments        Comment[]
+  likes           ArticleLike[]
+  tags            ArticleTag[]
+
+  @@index([category])
+  @@index([publishedAt])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  articleId  String
+  authorName String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, createdAt])
+}
+
+model ArticleLike {
+  id        String   @id @default(cuid())
+  articleId String
+  visitorId String
+  createdAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, visitorId])
+  @@index([articleId])
+}
+
+model Tag {
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String       @unique
+  createdAt DateTime     @default(now())
+  articles  ArticleTag[]
+}
+
+model ArticleTag {
+  articleId String
+  tagId     String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+}

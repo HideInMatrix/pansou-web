@@ -51,7 +51,11 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-
+  Article: 'Article',
+  Comment: 'Comment',
+  ArticleLike: 'ArticleLike',
+  Tag: 'Tag',
+  ArticleTag: 'ArticleTag'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -68,4 +72,91 @@ export const TransactionIsolationLevel = {
 } as const
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const ArticleScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  titleEn: 'titleEn',
+  titleZhHant: 'titleZhHant',
+  excerpt: 'excerpt',
+  excerptEn: 'excerptEn',
+  excerptZhHant: 'excerptZhHant',
+  content: 'content',
+  contentEn: 'contentEn',
+  contentZhHant: 'contentZhHant',
+  category: 'category',
+  authorName: 'authorName',
+  readTimeMinutes: 'readTimeMinutes',
+  publishedAt: 'publishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ArticleScalarFieldEnum = (typeof ArticleScalarFieldEnum)[keyof typeof ArticleScalarFieldEnum]
+
+
+export const CommentScalarFieldEnum = {
+  id: 'id',
+  articleId: 'articleId',
+  authorName: 'authorName',
+  content: 'content',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CommentScalarFieldEnum = (typeof CommentScalarFieldEnum)[keyof typeof CommentScalarFieldEnum]
+
+
+export const ArticleLikeScalarFieldEnum = {
+  id: 'id',
+  articleId: 'articleId',
+  visitorId: 'visitorId',
+  createdAt: 'createdAt'
+} as const
+
+export type ArticleLikeScalarFieldEnum = (typeof ArticleLikeScalarFieldEnum)[keyof typeof ArticleLikeScalarFieldEnum]
+
+
+export const TagScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  createdAt: 'createdAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const ArticleTagScalarFieldEnum = {
+  articleId: 'articleId',
+  tagId: 'tagId'
+} as const
+
+export type ArticleTagScalarFieldEnum = (typeof ArticleTagScalarFieldEnum)[keyof typeof ArticleTagScalarFieldEnum]
+
+
+export const SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+} as const
+
+export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+} as const
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

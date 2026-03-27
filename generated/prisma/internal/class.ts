@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.0.1",
   "engineVersion": "f09f2815f091dbba658cdcd2264306d88bb5bda6",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Article {\n  id              String        @id @default(cuid())\n  slug            String        @unique\n  title           String\n  titleEn         String?\n  titleZhHant     String?\n  excerpt         String\n  excerptEn       String?\n  excerptZhHant   String?\n  content         String\n  contentEn       String?\n  contentZhHant   String?\n  category        String\n  authorName      String\n  readTimeMinutes Int\n  publishedAt     DateTime      @default(now())\n  createdAt       DateTime      @default(now())\n  updatedAt       DateTime      @updatedAt\n  comments        Comment[]\n  likes           ArticleLike[]\n  tags            ArticleTag[]\n\n  @@index([category])\n  @@index([publishedAt])\n}\n\nmodel Comment {\n  id         String   @id @default(cuid())\n  articleId  String\n  authorName String\n  content    String\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)\n\n  @@index([articleId, createdAt])\n}\n\nmodel ArticleLike {\n  id        String   @id @default(cuid())\n  articleId String\n  visitorId String\n  createdAt DateTime @default(now())\n  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)\n\n  @@unique([articleId, visitorId])\n  @@index([articleId])\n}\n\nmodel Tag {\n  id        String       @id @default(cuid())\n  slug      String       @unique\n  name      String       @unique\n  createdAt DateTime     @default(now())\n  articles  ArticleTag[]\n}\n\nmodel ArticleTag {\n  articleId String\n  tagId     String\n  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)\n  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)\n\n  @@id([articleId, tagId])\n  @@index([tagId])\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Article\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"titleEn\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"titleZhHant\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"excerpt\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"excerptEn\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"excerptZhHant\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"contentEn\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"contentZhHant\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"readTimeMinutes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"publishedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"comments\",\"kind\":\"object\",\"type\":\"Comment\",\"relationName\":\"ArticleToComment\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"ArticleLike\",\"relationName\":\"ArticleToArticleLike\"},{\"name\":\"tags\",\"kind\":\"object\",\"type\":\"ArticleTag\",\"relationName\":\"ArticleToArticleTag\"}],\"dbName\":null},\"Comment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"articleId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"article\",\"kind\":\"object\",\"type\":\"Article\",\"relationName\":\"ArticleToComment\"}],\"dbName\":null},\"ArticleLike\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"articleId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"visitorId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"article\",\"kind\":\"object\",\"type\":\"Article\",\"relationName\":\"ArticleToArticleLike\"}],\"dbName\":null},\"Tag\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"articles\",\"kind\":\"object\",\"type\":\"ArticleTag\",\"relationName\":\"ArticleTagToTag\"}],\"dbName\":null},\"ArticleTag\":{\"fields\":[{\"name\":\"articleId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tagId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"article\",\"kind\":\"object\",\"type\":\"Article\",\"relationName\":\"ArticleToArticleTag\"},{\"name\":\"tag\",\"kind\":\"object\",\"type\":\"Tag\",\"relationName\":\"ArticleTagToTag\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -58,8 +58,8 @@ export interface PrismaClientConstructor {
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Users
-   * const users = await prisma.user.findMany()
+   * // Fetch zero or more Articles
+   * const articles = await prisma.article.findMany()
    * ```
    * 
    * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -80,8 +80,8 @@ export interface PrismaClientConstructor {
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Users
- * const users = await prisma.user.findMany()
+ * // Fetch zero or more Articles
+ * const articles = await prisma.article.findMany()
  * ```
  * 
  * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -174,7 +174,55 @@ export interface PrismaClient<
     extArgs: ExtArgs
   }>>
 
-    
+      /**
+   * `prisma.article`: Exposes CRUD operations for the **Article** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Articles
+    * const articles = await prisma.article.findMany()
+    * ```
+    */
+  get article(): Prisma.ArticleDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.comment`: Exposes CRUD operations for the **Comment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Comments
+    * const comments = await prisma.comment.findMany()
+    * ```
+    */
+  get comment(): Prisma.CommentDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.articleLike`: Exposes CRUD operations for the **ArticleLike** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ArticleLikes
+    * const articleLikes = await prisma.articleLike.findMany()
+    * ```
+    */
+  get articleLike(): Prisma.ArticleLikeDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.tag`: Exposes CRUD operations for the **Tag** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Tags
+    * const tags = await prisma.tag.findMany()
+    * ```
+    */
+  get tag(): Prisma.TagDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.articleTag`: Exposes CRUD operations for the **ArticleTag** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ArticleTags
+    * const articleTags = await prisma.articleTag.findMany()
+    * ```
+    */
+  get articleTag(): Prisma.ArticleTagDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {

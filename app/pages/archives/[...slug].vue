@@ -1,51 +1,66 @@
 <script setup lang="ts" async>
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { ArrowLeft, CalendarDays, FolderOpen, Loader2, Tag, UserRound } from "lucide-vue-next";
+import { ArrowLeft, CalendarDays, Clock3, FolderOpen, Loader2, Tag, UserRound } from "lucide-vue-next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "~~/shared/utils/time";
 
+interface ArticleTagItem {
+  id: string;
+  slug: string;
+  name: string;
+}
+
 interface ArticleDetail {
+  id: string;
+  slug: string;
   title: string;
-  path: string;
-  id?: string;
-  date?: string;
-  auther?: string;
-  author?: string;
-  cover?: string;
-  excerpt?: string;
-  permalink?: string;
-  categories?: string[];
-  tags?: string[];
-  body?: Record<string, unknown>;
+  excerpt: string;
+  category: string;
+  authorName: string;
+  readTimeMinutes: number;
+  publishedAt: string;
+  updatedAt: string;
+  tags: ArticleTagItem[];
+  body: Record<string, unknown>;
 }
 
 const route = useRoute();
-const normalizedPath = computed(() => {
-  if (route.path === "/") {
-    return "/";
+const articleSlug = computed(() => {
+  const slug = route.params.slug;
+
+  if (Array.isArray(slug)) {
+    return slug.join("/");
   }
-  return route.path.replace(/\/+$/, "");
+
+  return typeof slug === "string" ? slug : "";
 });
 
 const { data, pending, error } = await useAsyncData(
-  "content-article-detail",
+  "archive-article-detail",
   async () => {
-    return queryCollection("articles")
-      .orWhere((group) => group.where("permalink", "=", normalizedPath.value).where("path", "=", normalizedPath.value))
-      .first();
+    if (!articleSlug.value) {
+      return null;
+    }
+
+    const response = await $fetch<{ article: ArticleDetail }>("/api/articles/detail", {
+      query: {
+        slug: articleSlug.value,
+      },
+    });
+
+    return response.article;
   },
   {
-    watch: [normalizedPath],
+    watch: [articleSlug],
   },
 );
 
 const article = computed<ArticleDetail | null>(() => (data.value as ArticleDetail | null) ?? null);
-const authorName = computed(() => article.value?.auther || article.value?.author || "匿名");
-const categoryList = computed(() => article.value?.categories ?? []);
+const authorName = computed(() => article.value?.authorName || "匿名");
+const categoryList = computed(() => (article.value?.category ? [article.value.category] : []));
 const tagList = computed(() => article.value?.tags ?? []);
-const articleLink = computed(() => article.value?.permalink || article.value?.path || "/archives");
 const articleContentRef = ref<HTMLElement | null>(null);
 
 const renderMermaid = async () => {
@@ -100,7 +115,7 @@ onMounted(() => {
 });
 
 watch(
-  () => article.value?.path,
+  () => article.value?.slug,
   () => {
     renderMermaid();
   },
@@ -127,7 +142,7 @@ useSeoMeta({
   
         <div v-else-if="error || !article" class="bg-checkerboard rounded-2xl border border-zinc-200 p-10 text-center shadow-sm dark:border-zinc-800">
           <h1 class="text-xl font-semibold">文章不存在或读取失败</h1>
-          <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">请检查 permalink 是否正确，或返回列表重新选择文章。</p>
+          <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">请检查文章 slug 是否正确，或返回列表重新选择文章。</p>
           <Button class="mt-6" as-child>
             <NuxtLink to="/archives">返回文章列表</NuxtLink>
           </Button>
@@ -150,7 +165,11 @@ useSeoMeta({
                 </div>
                 <div class="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
                   <CalendarDays class="h-4 w-4 text-blue-600 dark:text-indigo-400" />
-                  <span>{{ formatDate(article.date) }}</span>
+                  <span>{{ formatDate(article.publishedAt) }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
+                  <Clock3 class="h-4 w-4 text-blue-600 dark:text-indigo-400" />
+                  <span>{{ article.readTimeMinutes }} 分钟阅读</span>
                 </div>
               </div>
   
@@ -179,10 +198,10 @@ useSeoMeta({
                 <div class="flex flex-wrap gap-2">
                   <Badge
                     v-for="tag in tagList"
-                    :key="`tag-${tag}`"
+                    :key="`tag-${tag.slug}`"
                     class="border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/60 dark:text-blue-300"
                   >
-                    #{{ tag }}
+                    #{{ tag.name }}
                   </Badge>
                   <span v-if="tagList.length === 0" class="text-xs text-zinc-400">无标签</span>
                 </div>
@@ -192,11 +211,8 @@ useSeoMeta({
                 <Button class="w-full justify-center gap-2" variant="outline" as-child>
                   <NuxtLink to="/archives">
                     <ArrowLeft class="h-4 w-4" />
-                    返回列表
+                    返回文章列表
                   </NuxtLink>
-                </Button>
-                <Button class="w-full justify-center" as-child>
-                  <NuxtLink :to="articleLink">使用 permalink 打开</NuxtLink>
                 </Button>
               </div>
             </div>

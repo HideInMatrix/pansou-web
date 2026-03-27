@@ -17,4 +17,28 @@ import * as Prisma from './internal/prismaNamespaceBrowser.js'
 export { Prisma }
 export * as $Enums from './enums.js'
 export * from './enums.js';
-
+/**
+ * Model Article
+ * 
+ */
+export type Article = Prisma.ArticleModel
+/**
+ * Model Comment
+ * 
+ */
+export type Comment = Prisma.CommentModel
+/**
+ * Model ArticleLike
+ * 
+ */
+export type ArticleLike = Prisma.ArticleLikeModel
+/**
+ * Model Tag
+ * 
+ */
+export type Tag = Prisma.TagModel
+/**
+ * Model ArticleTag
+ * 
+ */
+export type ArticleTag = Prisma.ArticleTagModel
