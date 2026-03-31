@@ -50,7 +50,7 @@ tags:
 
 然后参考着官方的文件。创建如下文件
 
-![9ec2af9a91890e8c26b66.png](https://pan.micromatrix.eu.org/file/9ec2af9a91890e8c26b66.png)
+![9ec2af9a91890e8c26b66.png](https://pan.micromatrix.org/file/9ec2af9a91890e8c26b66.png)
 
 在 `nodeOps.ts`中编写需要的 dom 操作方法。
 
